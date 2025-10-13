@@ -1,7 +1,7 @@
 ---
 external help file: ADEffectiveAccess.dll-Help.xml
 Module Name: ADEffectiveAccess
-online version:
+online version: https://github.com/santisq/ADEffectiveAccess/blob/main/docs/en-US/Get-ADEffectiveAccess.md
 schema: 2.0.0
 ---
 

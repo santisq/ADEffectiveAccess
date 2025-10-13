@@ -4,21 +4,30 @@ using System.Management.Automation;
 
 namespace ADEffectiveAccess;
 
-[Cmdlet(VerbsCommon.Get, "ADEffectiveAccess")]
+[Cmdlet(VerbsCommon.Get, "ADEffectiveAccess", DefaultParameterSetName = FilterSet)]
+[OutputType(typeof(EffectiveAccessRule), typeof(EffectiveAuditRule))]
 [Alias("gea", "gacl")]
 public sealed class GetADEffectiveAccessComand : PSCmdlet
 {
     private const string SecurityDescriptor = "nTSecurityDescriptor";
 
+    private const string FilterSet = "Filter";
+
+    private const string IdentitySet = "Identity";
+
     private SchemaMap? _map;
 
-    [Parameter(Position = 0)]
+    [Parameter(Position = 0, ParameterSetName = FilterSet)]
+    [ValidateNotNullOrEmpty]
     public string? LdapFilter { get; set; }
+
+    [Parameter(Position = 0, Mandatory = true, ParameterSetName = IdentitySet)]
+    public string? Identity { get; set; }
 
     [Parameter]
     public SwitchParameter Audit { get; set; }
 
-    [Parameter]
+    [Parameter(ParameterSetName = FilterSet)]
     [ValidateRange(0, int.MaxValue)]
     public int Top { get; set; } = 0;
 
@@ -29,11 +38,18 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
     public SearchScope SearchScope { get; set; } = SearchScope.Subtree;
 
     [Parameter]
+    [ValidateNotNullOrEmpty]
+    public string? SearchBase { get; set; } = string.Empty;
+
+    [Parameter]
     [Credential]
     public PSCredential? Credential { get; set; }
 
     [Parameter]
     public string? Server { get; set; }
+
+    [Parameter]
+    public int PageSize { get; set; } = 1000;
 
     protected override void BeginProcessing()
     {
@@ -53,11 +69,13 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
 
     protected override void EndProcessing()
     {
-        using DirectorySearcher searcher = new(LdapFilter, [SecurityDescriptor])
+        using DirectoryEntry root = new(SearchBase);
+        using DirectorySearcher searcher = new(root, LdapFilter, [SecurityDescriptor])
         {
             SizeLimit = Top,
             Tombstone = IncludeDeletedObjects,
             SearchScope = SearchScope,
+            PageSize = PageSize,
             SecurityMasks = SecurityMasks.Group |
                 SecurityMasks.Dacl |
                 SecurityMasks.Owner

@@ -30,7 +30,7 @@
     Copyright         = '(c) Santiago Squarzon. All rights reserved.'
 
     # Description of the functionality provided by this module
-    # Description = ''
+    Description       = 'Active Directory friendly ACLs'
 
     # Minimum version of the PowerShell engine required by this module
     PowerShellVersion = '5.1'
@@ -123,7 +123,7 @@
     } # End of PrivateData hashtable
 
     # HelpInfo URI of this module
-    HelpInfoURI = ''
+    HelpInfoURI       = 'https://github.com/santisq/ADEffectiveAccess/blob/main/docs/en-US/Get-ADEffectiveAccess.md'
 
     # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
     # DefaultCommandPrefix = ''
