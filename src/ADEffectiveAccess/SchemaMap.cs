@@ -16,6 +16,16 @@ internal sealed class SchemaMap
         if (ctx is not null) PopulateMap(ctx, _schemaMap);
     }
 
+    internal string Translate(Guid guid, string defaultValue)
+    {
+        if (guid == Guid.Empty || _schemaMap.TryGetValue(guid, out defaultValue))
+        {
+            return defaultValue;
+        }
+
+        return guid.ToString();
+    }
+
     private static void PopulateMap(
         string schemaNamingContext,
         Dictionary<Guid, string> map)

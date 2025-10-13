@@ -24,4 +24,8 @@ public abstract class EffectiveRule<T>(
     public bool IsInherited { get => Rule.IsInherited; }
 
     public PropagationFlags PropagationFlags { get => Rule.PropagationFlags; }
+
+    public string? ObjectTypeToString { get; internal set; }
+
+    public string? InheritedObjectTypeToString { get; internal set; }
 }

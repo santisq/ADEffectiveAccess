@@ -24,19 +24,27 @@ public sealed class AclBuilder : ActiveDirectorySecurity
         _group = GetGroup(_targetType);
     }
 
-    internal IEnumerable<EffectiveAccessRule> EnumerateAccessRules()
+    internal IEnumerable<EffectiveAccessRule> EnumerateAccessRules(SchemaMap map)
     {
         foreach (ActiveDirectoryAccessRule rule in GetAccessRules(true, true, _targetType))
         {
-            yield return new EffectiveAccessRule(rule, _owner, _group, _path);
+            yield return new EffectiveAccessRule(rule, _owner, _group, _path)
+            {
+                ObjectTypeToString = map.Translate(rule.ObjectType, "All Objects (Full Control)"),
+                InheritedObjectTypeToString = map.Translate(rule.InheritedObjectType, "Any Inherited Object")
+            };
         }
     }
 
-    internal IEnumerable<EffectiveAuditRule> EnumerateAuditRules()
+    internal IEnumerable<EffectiveAuditRule> EnumerateAuditRules(SchemaMap map)
     {
         foreach (ActiveDirectoryAuditRule rule in GetAuditRules(true, true, _targetType))
         {
-            yield return new EffectiveAuditRule(rule, _owner, _group, _path);
+            yield return new EffectiveAuditRule(rule, _owner, _group, _path)
+            {
+                ObjectTypeToString = map.Translate(rule.ObjectType, "All Objects (Full Control)"),
+                InheritedObjectTypeToString = map.Translate(rule.InheritedObjectType, "Any Inherited Object")
+            };
         }
     }
 }

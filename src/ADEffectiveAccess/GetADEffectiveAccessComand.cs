@@ -5,9 +5,12 @@ using System.Management.Automation;
 namespace ADEffectiveAccess;
 
 [Cmdlet(VerbsCommon.Get, "ADEffectiveAccess")]
+[Alias("gea", "gacl")]
 public sealed class GetADEffectiveAccessComand : PSCmdlet
 {
     private const string SecurityDescriptor = "nTSecurityDescriptor";
+
+    private SchemaMap? _map;
 
     [Parameter(Position = 0)]
     public string? LdapFilter { get; set; }
@@ -24,6 +27,29 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
 
     [Parameter]
     public SearchScope SearchScope { get; set; } = SearchScope.Subtree;
+
+    [Parameter]
+    [Credential]
+    public PSCredential? Credential { get; set; }
+
+    [Parameter]
+    public string? Server { get; set; }
+
+    protected override void BeginProcessing()
+    {
+        try
+        {
+            _map = new SchemaMap(Server);
+        }
+        catch (Exception exception)
+        {
+            ErrorRecord error = new(
+                exception, "SchemaMapCreationFailure",
+                ErrorCategory.ConnectionError, null);
+
+            ThrowTerminatingError(error);
+        }
+    }
 
     protected override void EndProcessing()
     {
@@ -55,11 +81,15 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
             }
 
             AclBuilder builder = new(obj.Path, descriptor);
-            WriteObject(builder.EnumerateAccessRules(), enumerateCollection: true);
+            WriteObject(
+                builder.EnumerateAccessRules(_map!),
+                enumerateCollection: true);
 
             if (Audit)
             {
-                WriteObject(builder.EnumerateAuditRules(), enumerateCollection: true);
+                WriteObject(
+                    builder.EnumerateAuditRules(_map!),
+                    enumerateCollection: true);
             }
         }
     }
