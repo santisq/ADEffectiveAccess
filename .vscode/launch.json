@@ -13,7 +13,7 @@
                 "-NoExit",
                 "-NoProfile",
                 "-Command",
-                "Import-Module ./output/ADReadableAcl"
+                "Import-Module ./output/ADEffectiveAccess"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

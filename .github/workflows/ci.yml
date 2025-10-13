@@ -1,4 +1,4 @@
-name: ADReadableAcl Workflow
+name: ADEffectiveAccess Workflow
 on:
   push:
     branches:

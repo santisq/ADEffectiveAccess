@@ -5,7 +5,7 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <AssemblyName>ADReadableAcl</AssemblyName>
+    <AssemblyName>ADEffectiveAccess</AssemblyName>
     <LangVersion>latest</LangVersion>
     <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
