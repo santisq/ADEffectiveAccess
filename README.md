@@ -2,7 +2,8 @@
 
 ## Description
 
-> [!NOTE] This function is being rewritten to C#, you can find the original version in [this Gist](https://gist.github.com/santisq/a84af707780b1168f1fa390632096a5a)
+> [!NOTE]
+> This function is being rewritten to C#, you can find the original version in [this Gist](https://gist.github.com/santisq/a84af707780b1168f1fa390632096a5a)
 
 PowerShell function that tries to give a friendly translation of [`Get-Acl`](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.security/get-acl?view=powershell-7.2) into human readable data. The function is designed exclusively for Active Directory, and requires the [__ActiveDirectory Module__](https://docs.microsoft.com/en-us/powershell/module/activedirectory/?view=windowsserver2022-ps).
 
