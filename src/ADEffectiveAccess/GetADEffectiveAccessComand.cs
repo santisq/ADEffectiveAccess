@@ -15,7 +15,8 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
 
     private const string IdentitySet = "Identity";
 
-    private SchemaMap? _map;
+    [ThreadStatic]
+    private static GuidResolver? _map;
 
     [Parameter(Position = 0, ParameterSetName = FilterSet)]
     [ValidateNotNullOrEmpty]
@@ -55,7 +56,8 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
     {
         try
         {
-            _map = new SchemaMap(Server);
+            _map ??= new GuidResolver();
+            _map.SetCurrentContext(Server);
         }
         catch (Exception exception)
         {

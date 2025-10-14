@@ -4,23 +4,35 @@ using System.DirectoryServices;
 
 namespace ADEffectiveAccess;
 
-internal sealed class SchemaMap
+internal sealed class GuidResolver
 {
-    private readonly Dictionary<Guid, string> _schemaMap = [];
+    private readonly Dictionary<string?, Dictionary<Guid, string>> _map = [];
 
-    internal SchemaMap(string? server = null)
+    private Dictionary<Guid, string>? _current;
+
+    internal void SetCurrentContext(string? server = null)
     {
         string path = server is null ? "LDAP://RootDSE" : $"LDAP://{server}/RootDSE";
         using DirectoryEntry root = new(path);
+        string? ctxName = root.Properties["defaultNamingContext"][0]?.ToString();
+        if (_map.TryGetValue(ctxName, out Dictionary<Guid, string> current))
+        {
+            _current = current;
+            return;
+        }
+
+        current = [];
         string? ctxSchema = root.Properties["schemaNamingContext"][0]?.ToString();
         string? ctxConfig = root.Properties["configurationNamingContext"][0]?.ToString();
-        if (ctxSchema is not null) PopulateSchema(ctxSchema, _schemaMap);
-        if (ctxConfig is not null) PopulateExtendedRights(ctxConfig, _schemaMap);
+        if (ctxSchema is not null) PopulateSchema(ctxSchema, current);
+        if (ctxConfig is not null) PopulateExtendedRights(ctxConfig, current);
+        _map[ctxName] = current;
+        _current = current;
     }
 
     internal string Translate(Guid guid, string defaultValue)
     {
-        if (guid == Guid.Empty || _schemaMap.TryGetValue(guid, out defaultValue))
+        if (guid == Guid.Empty || _current!.TryGetValue(guid, out defaultValue))
         {
             return defaultValue;
         }

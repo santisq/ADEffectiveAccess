@@ -24,7 +24,7 @@ public sealed class AclBuilder : ActiveDirectorySecurity
         _group = GetGroup(_targetType);
     }
 
-    internal IEnumerable<EffectiveAccessRule> EnumerateAccessRules(SchemaMap map)
+    internal IEnumerable<EffectiveAccessRule> EnumerateAccessRules(GuidResolver map)
     {
         foreach (ActiveDirectoryAccessRule rule in GetAccessRules(true, true, _targetType))
         {
@@ -36,7 +36,7 @@ public sealed class AclBuilder : ActiveDirectorySecurity
         }
     }
 
-    internal IEnumerable<EffectiveAuditRule> EnumerateAuditRules(SchemaMap map)
+    internal IEnumerable<EffectiveAuditRule> EnumerateAuditRules(GuidResolver map)
     {
         foreach (ActiveDirectoryAuditRule rule in GetAuditRules(true, true, _targetType))
         {
