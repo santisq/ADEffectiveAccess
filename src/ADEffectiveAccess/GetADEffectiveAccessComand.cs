@@ -18,15 +18,21 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
     private DirectoryEntryBuilder? _entryBuilder;
 
-    [ThreadStatic]
+    // [ThreadStatic]
+    // private static GuidResolver? _map;
+
     private static GuidResolver? _map;
+
+    [Parameter(
+        Position = 0,
+        Mandatory = true,
+        ValueFromPipelineByPropertyName = true,
+        ParameterSetName = IdentitySet)]
+    public string Identity { get; set; } = null!;
 
     [Parameter(Position = 0, ParameterSetName = FilterSet)]
     [ValidateNotNullOrEmpty]
     public string? LdapFilter { get; set; }
-
-    [Parameter(Position = 0, Mandatory = true, ParameterSetName = IdentitySet)]
-    public string Identity { get; set; } = null!;
 
     [Parameter]
     public SwitchParameter Audit { get; set; }
@@ -63,20 +69,21 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
     {
         try
         {
+            _map ??= GuidResolver.GetFromTLS();
             _entryBuilder = new DirectoryEntryBuilder(Credential, AuthenticationTypes);
-            _map ??= new GuidResolver();
             _map.SetCurrentContext(Server, _entryBuilder);
         }
         catch (Exception exception)
         {
-            _map = null;
             exception.ThrowGuidResolverError(this);
         }
     }
 
-    protected override void EndProcessing()
+    protected override void ProcessRecord()
     {
         if (_entryBuilder is null) return;
+        if (_map is null) return;
+
         using DirectoryEntry root = GetRootEntry(_entryBuilder);
         using DirectorySearcher searcher = new(root, LdapFilter, [SecurityDescriptor])
         {
@@ -104,13 +111,13 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
             AclBuilder builder = new(obj.Path, descriptor);
             WriteObject(
-                builder.EnumerateAccessRules(_map!),
+                builder.EnumerateAccessRules(_map),
                 enumerateCollection: true);
 
             if (Audit)
             {
                 WriteObject(
-                    builder.EnumerateAuditRules(_map!),
+                    builder.EnumerateAuditRules(_map),
                     enumerateCollection: true);
             }
         }
