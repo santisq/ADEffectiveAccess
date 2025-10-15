@@ -15,6 +15,8 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
 
     private const string IdentitySet = "Identity";
 
+    private DirectoryEntryBuilder? _entryBuilder;
+
     [ThreadStatic]
     private static GuidResolver? _map;
 
@@ -52,20 +54,21 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
     [Parameter]
     public int PageSize { get; set; } = 1000;
 
+    [Parameter]
+    public AuthenticationTypes AuthenticationTypes { get; set; } = AuthenticationTypes.Secure;
+
     protected override void BeginProcessing()
     {
         try
         {
-            _map ??= new GuidResolver();
+            _entryBuilder = new DirectoryEntryBuilder(Credential, AuthenticationTypes);
+            _map ??= new GuidResolver(_entryBuilder);
             _map.SetCurrentContext(Server);
         }
         catch (Exception exception)
         {
-            ErrorRecord error = new(
-                exception, "SchemaMapCreationFailure",
-                ErrorCategory.ConnectionError, null);
-
-            ThrowTerminatingError(error);
+            _map = null;
+            exception.ThrowGuidResolverError(this);
         }
     }
 
@@ -92,11 +95,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
         {
             if (obj.Properties[SecurityDescriptor][0] is not byte[] descriptor)
             {
-                ErrorRecord error = new(
-                    new InvalidOperationException($"No Security Descriptor found for '{obj.Path}'."),
-                    "InvalidSecurityDescriptorType", ErrorCategory.InvalidResult, obj);
-
-                WriteError(error);
+                obj.WriteInvalidSecurityDescriptorError(this);
                 continue;
             }
 

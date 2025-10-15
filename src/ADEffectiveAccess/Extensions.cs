@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using System.DirectoryServices;
+using System.Management.Automation;
 
 namespace ADEffectiveAccess;
 
@@ -11,9 +14,18 @@ internal static class Extensions
     {
         bool result;
         if (result = !dictionary.ContainsKey(key))
-        {
             dictionary.Add(key, value);
-        }
+
         return !result;
     }
+
+    internal static void ThrowGuidResolverError(this Exception exception, PSCmdlet cmdlet)
+        => cmdlet.ThrowTerminatingError(
+            new ErrorRecord(exception, "CreateGuidResolverError", ErrorCategory.ConnectionError, null));
+
+    internal static void WriteInvalidSecurityDescriptorError(this SearchResult obj, PSCmdlet cmdlet)
+        => cmdlet.WriteError(
+            new ErrorRecord(
+                new InvalidOperationException($"No Security Descriptor found for '{obj.Path}'."),
+                "InvalidSecurityDescriptorType", ErrorCategory.InvalidResult, obj));
 }

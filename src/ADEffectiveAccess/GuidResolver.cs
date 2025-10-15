@@ -10,10 +10,14 @@ internal sealed class GuidResolver
 
     private Dictionary<Guid, string>? _current;
 
-    internal void SetCurrentContext(string? server = null)
+    private readonly DirectoryEntryBuilder _builder;
+
+    internal GuidResolver(DirectoryEntryBuilder builder) => _builder = builder;
+
+    internal void SetCurrentContext(string? server)
     {
-        string path = server is null ? "LDAP://RootDSE" : $"LDAP://{server}/RootDSE";
-        using DirectoryEntry root = new(path);
+        string path = server is null ? "RootDSE" : $"{server}/RootDSE";
+        using DirectoryEntry root = _builder.Create(path);
         string? ctxName = root.Properties["defaultNamingContext"][0]?.ToString();
         if (_map.TryGetValue(ctxName, out Dictionary<Guid, string> current))
         {
@@ -40,11 +44,11 @@ internal sealed class GuidResolver
         return guid.ToString();
     }
 
-    private static void PopulateSchema(
+    private void PopulateSchema(
         string schemaNamingContext,
         Dictionary<Guid, string> map)
     {
-        using DirectoryEntry root = new($"LDAP://{schemaNamingContext}");
+        using DirectoryEntry root = _builder.Create(schemaNamingContext);
         using DirectorySearcher searcher = new(
             searchRoot: root,
             filter: "(&(schemaIdGuid=*)(|(objectClass=attributeSchema)(objectClass=classSchema)))",
@@ -61,11 +65,11 @@ internal sealed class GuidResolver
         }
     }
 
-    private static void PopulateExtendedRights(
+    private void PopulateExtendedRights(
         string configurationNamingContext,
         Dictionary<Guid, string> map)
     {
-        using DirectoryEntry root = new($"LDAP://CN=Extended-Rights,{configurationNamingContext}");
+        using DirectoryEntry root = _builder.Create($"CN=Extended-Rights,{configurationNamingContext}");
         using DirectorySearcher searcher = new(
             searchRoot: root,
             filter: "(objectClass=controlAccessRight)",
