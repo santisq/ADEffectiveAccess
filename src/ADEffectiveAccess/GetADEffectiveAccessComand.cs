@@ -21,7 +21,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
     // [ThreadStatic]
     // private static GuidResolver? _map;
 
-    private static GuidResolver? _map;
+    private GuidResolver? _map;
 
     [Parameter(
         Position = 0,

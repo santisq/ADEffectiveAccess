@@ -7,7 +7,7 @@ namespace ADEffectiveAccess;
 
 internal class RunspaceSpecificStorage<T>(Func<T> factory)
 {
-    private readonly ConditionalWeakTable<Runspace, Lazy<T>> _map = new();
+    internal readonly ConditionalWeakTable<Runspace, Lazy<T>> _map = new();
 
     private readonly Func<T> _factory = factory;
 

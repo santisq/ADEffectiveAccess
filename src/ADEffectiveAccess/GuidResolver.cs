@@ -4,18 +4,17 @@ using System.DirectoryServices;
 
 namespace ADEffectiveAccess;
 
-public sealed class GuidResolver
+internal sealed class GuidResolver
 {
-    public Guid Id { get; } = Guid.NewGuid();
     private readonly Dictionary<string?, Dictionary<Guid, string>> _map = [];
 
     private Dictionary<Guid, string>? _current;
 
     private static readonly RunspaceSpecificStorage<GuidResolver> _state = new(() => new());
 
-    internal static GuidResolver GetFromTLS() => _state.GetFromTLS();
-
     private GuidResolver() { }
+
+    internal static GuidResolver GetFromTLS() => _state.GetFromTLS();
 
     internal void SetCurrentContext(string? server, DirectoryEntryBuilder builder)
     {
