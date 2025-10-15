@@ -23,7 +23,7 @@
           </TableColumnHeader>
           <TableColumnHeader>
             <Label>ObjectType</Label>
-            <Alignment>Center</Alignment>
+            <Alignment>Left</Alignment>
           </TableColumnHeader>
           <TableColumnHeader>
             <Label>InheritedObjectType</Label>

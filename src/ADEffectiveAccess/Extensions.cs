@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.DirectoryServices;
 using System.Management.Automation;
+using System.Security.Principal;
 
 namespace ADEffectiveAccess;
 
@@ -28,4 +29,15 @@ internal static class Extensions
             new ErrorRecord(
                 new InvalidOperationException($"No Security Descriptor found for '{obj.Path}'."),
                 "InvalidSecurityDescriptorType", ErrorCategory.InvalidResult, obj));
+
+    // internal static void WriteIdentityNotFoundError(this DirectoryEntry root, string identity, PSCmdlet cmdlet)
+    //     => cmdlet.WriteError(
+    //         new ErrorRecord(
+    //             new IdentityNotMappedException(
+    //                 $"Cannot find an object with identity: '{identity}' under: '{root.Properties["distinguishedName"][0]}'."),
+    //             "IvalidIdentity", ErrorCategory.InvalidResult, identity));
+
+    internal static IdentityNotMappedException ToIdentityNotFoundException(this string identity, string? rootDn)
+        => new IdentityNotMappedException(
+            $"Cannot find an object with identity: '{identity}' under: '{rootDn}'.");
 }

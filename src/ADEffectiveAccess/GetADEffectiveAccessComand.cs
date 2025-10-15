@@ -1,13 +1,14 @@
 ﻿using System;
 using System.DirectoryServices;
 using System.Management.Automation;
+using System.Security.Principal;
 
 namespace ADEffectiveAccess;
 
-[Cmdlet(VerbsCommon.Get, "ADEffectiveAccess", DefaultParameterSetName = FilterSet)]
+[Cmdlet(VerbsCommon.Get, "ADEffectiveAccess", DefaultParameterSetName = IdentitySet)]
 [OutputType(typeof(EffectiveAccessRule), typeof(EffectiveAuditRule))]
 [Alias("gea", "gacl")]
-public sealed class GetADEffectiveAccessComand : PSCmdlet
+public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 {
     private const string SecurityDescriptor = "nTSecurityDescriptor";
 
@@ -25,7 +26,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
     public string? LdapFilter { get; set; }
 
     [Parameter(Position = 0, Mandatory = true, ParameterSetName = IdentitySet)]
-    public string? Identity { get; set; }
+    public string Identity { get; set; } = null!;
 
     [Parameter]
     public SwitchParameter Audit { get; set; }
@@ -37,12 +38,12 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
     [Parameter]
     public SwitchParameter IncludeDeletedObjects { get; set; }
 
-    [Parameter]
+    [Parameter(ParameterSetName = FilterSet)]
     public SearchScope SearchScope { get; set; } = SearchScope.Subtree;
 
-    [Parameter]
+    [Parameter(ParameterSetName = FilterSet)]
     [ValidateNotNullOrEmpty]
-    public string? SearchBase { get; set; } = string.Empty;
+    public string? SearchBase { get; set; }
 
     [Parameter]
     [Credential]
@@ -51,7 +52,8 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
     [Parameter]
     public string? Server { get; set; }
 
-    [Parameter]
+    [Parameter(ParameterSetName = FilterSet)]
+    [ValidateRange(0, int.MaxValue)]
     public int PageSize { get; set; } = 1000;
 
     [Parameter]
@@ -62,8 +64,8 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
         try
         {
             _entryBuilder = new DirectoryEntryBuilder(Credential, AuthenticationTypes);
-            _map ??= new GuidResolver(_entryBuilder);
-            _map.SetCurrentContext(Server);
+            _map ??= new GuidResolver();
+            _map.SetCurrentContext(Server, _entryBuilder);
         }
         catch (Exception exception)
         {
@@ -74,7 +76,8 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
 
     protected override void EndProcessing()
     {
-        using DirectoryEntry root = new(SearchBase);
+        if (_entryBuilder is null) return;
+        using DirectoryEntry root = GetRootEntry(_entryBuilder);
         using DirectorySearcher searcher = new(root, LdapFilter, [SecurityDescriptor])
         {
             SizeLimit = Top,
@@ -111,5 +114,44 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet
                     enumerateCollection: true);
             }
         }
+    }
+
+    private string? TryGetIdentityPath(string? identity) => identity switch
+    {
+        _ when identity is null => null,
+        _ when Guid.TryParse(identity, out Guid guid) => $"<GUID={guid:D}>",
+        _ when LanguagePrimitives.TryConvertTo(identity, out SecurityIdentifier sid) => $"<SID={sid}>",
+        _ => null
+    };
+
+    private DirectoryEntry GetRootEntry(DirectoryEntryBuilder builder)
+    {
+        const string dn = "distinguishedName";
+        if (ParameterSetName == FilterSet)
+        {
+            return builder.Create(SearchBase);
+        }
+
+        string? path = TryGetIdentityPath(Identity);
+        if (path is not null)
+        {
+            return builder.Create(path);
+        }
+
+        using DirectorySearcher searcher = new(
+            searchRoot: builder.RootEntry,
+            filter: $"(|({dn}={Identity})(samAccountName={Identity}))",
+            propertiesToLoad: [dn]);
+
+        SearchResult? result = searcher.FindOne()
+            ?? throw Identity.ToIdentityNotFoundException(builder.Root);
+
+        return builder.Create(result.Properties[dn][0].ToString());
+    }
+
+    public void Dispose()
+    {
+        _entryBuilder?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

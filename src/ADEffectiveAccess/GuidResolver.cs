@@ -10,14 +10,10 @@ internal sealed class GuidResolver
 
     private Dictionary<Guid, string>? _current;
 
-    private readonly DirectoryEntryBuilder _builder;
-
-    internal GuidResolver(DirectoryEntryBuilder builder) => _builder = builder;
-
-    internal void SetCurrentContext(string? server)
+    internal void SetCurrentContext(string? server, DirectoryEntryBuilder builder)
     {
         string path = server is null ? "RootDSE" : $"{server}/RootDSE";
-        using DirectoryEntry root = _builder.Create(path);
+        using DirectoryEntry root = builder.Create(path);
         string? ctxName = root.Properties["defaultNamingContext"][0]?.ToString();
         if (_map.TryGetValue(ctxName, out Dictionary<Guid, string> current))
         {
@@ -28,8 +24,8 @@ internal sealed class GuidResolver
         current = [];
         string? ctxSchema = root.Properties["schemaNamingContext"][0]?.ToString();
         string? ctxConfig = root.Properties["configurationNamingContext"][0]?.ToString();
-        if (ctxSchema is not null) PopulateSchema(ctxSchema, current);
-        if (ctxConfig is not null) PopulateExtendedRights(ctxConfig, current);
+        if (ctxSchema is not null) PopulateSchema(ctxSchema, current, builder);
+        if (ctxConfig is not null) PopulateExtendedRights(ctxConfig, current, builder);
         _map[ctxName] = current;
         _current = current;
     }
@@ -46,9 +42,10 @@ internal sealed class GuidResolver
 
     private void PopulateSchema(
         string schemaNamingContext,
-        Dictionary<Guid, string> map)
+        Dictionary<Guid, string> map,
+        DirectoryEntryBuilder builder)
     {
-        using DirectoryEntry root = _builder.Create(schemaNamingContext);
+        using DirectoryEntry root = builder.Create(schemaNamingContext);
         using DirectorySearcher searcher = new(
             searchRoot: root,
             filter: "(&(schemaIdGuid=*)(|(objectClass=attributeSchema)(objectClass=classSchema)))",
@@ -67,9 +64,10 @@ internal sealed class GuidResolver
 
     private void PopulateExtendedRights(
         string configurationNamingContext,
-        Dictionary<Guid, string> map)
+        Dictionary<Guid, string> map,
+        DirectoryEntryBuilder builder)
     {
-        using DirectoryEntry root = _builder.Create($"CN=Extended-Rights,{configurationNamingContext}");
+        using DirectoryEntry root = builder.Create($"CN=Extended-Rights,{configurationNamingContext}");
         using DirectorySearcher searcher = new(
             searchRoot: root,
             filter: "(objectClass=controlAccessRight)",
