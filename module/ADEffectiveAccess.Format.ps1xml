@@ -4,47 +4,46 @@
     <View>
       <Name>EffectiveAccessView</Name>
       <ViewSelectedBy>
-        <TypeName>PSADTree.TreeObjectBase</TypeName>
+        <TypeName>ADEffectiveAccess.EffectiveAccessRule</TypeName>
+        <TypeName>ADEffectiveAccess.EffectiveAuditRule</TypeName>
       </ViewSelectedBy>
       <GroupBy>
+        <PropertyName>Path</PropertyName>
         <Label>Path</Label>
       </GroupBy>
       <TableControl>
         <TableHeaders>
-          <!--<TableColumnHeader>
-            <Label>SamAccountName</Label>
-            <Width>20</Width>
-            <Alignment>Left</Alignment>
-          </TableColumnHeader>-->
           <TableColumnHeader>
-            <Label>Domain</Label>
-            <!--<Width>14</Width>-->
+            <Label>IdentityReference</Label>
             <Alignment>Left</Alignment>
           </TableColumnHeader>
           <TableColumnHeader>
-            <Label>ObjectClass</Label>
-            <!--<Width>14</Width>-->
-            <Alignment>Right</Alignment>
+            <Label>ActiveDirectoryRights</Label>
+            <Alignment>Left</Alignment>
           </TableColumnHeader>
           <TableColumnHeader>
-            <Label>Hierarchy</Label>
+            <Label>ObjectType</Label>
+            <Alignment>Center</Alignment>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>InheritedObjectType</Label>
             <Alignment>Left</Alignment>
           </TableColumnHeader>
         </TableHeaders>
         <TableRowEntries>
           <TableRowEntry>
             <TableColumnItems>
-              <!--<TableColumnItem>
-                <PropertyName>SamAccountName</PropertyName>
-              </TableColumnItem>-->
               <TableColumnItem>
-                <ScriptBlock>$_.Domain -replace '^DC=|(?&lt;!\\),.+'</ScriptBlock>
+                <PropertyName>IdentityReference</PropertyName>
               </TableColumnItem>
               <TableColumnItem>
-                <PropertyName>ObjectClass</PropertyName>
+                <PropertyName>ActiveDirectoryRights</PropertyName>
               </TableColumnItem>
               <TableColumnItem>
-                <PropertyName>Hierarchy</PropertyName>
+                <PropertyName>ObjectTypeToString</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>InheritedObjectTypeToString</PropertyName>
               </TableColumnItem>
             </TableColumnItems>
           </TableRowEntry>
