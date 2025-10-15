@@ -18,16 +18,15 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
     private DirectoryEntryBuilder? _entryBuilder;
 
-    // [ThreadStatic]
-    // private static GuidResolver? _map;
-
     private GuidResolver? _map;
 
     [Parameter(
         Position = 0,
         Mandatory = true,
+        ValueFromPipeline = true,
         ValueFromPipelineByPropertyName = true,
         ParameterSetName = IdentitySet)]
+    [Alias("DistinguishedName", "ObjectGuid", "ObjectSid", "SamAccountName")]
     public string Identity { get; set; } = null!;
 
     [Parameter(Position = 0, ParameterSetName = FilterSet)]
@@ -82,44 +81,59 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
     protected override void ProcessRecord()
     {
         if (_entryBuilder is null) return;
-        if (_map is null) return;
 
-        using DirectoryEntry root = GetRootEntry(_entryBuilder);
-        using DirectorySearcher searcher = new(root, LdapFilter, [SecurityDescriptor])
+        try
         {
-            SizeLimit = Top,
-            Tombstone = IncludeDeletedObjects,
-            SearchScope = SearchScope,
-            PageSize = PageSize,
-            SecurityMasks = SecurityMasks.Group |
-                SecurityMasks.Dacl |
-                SecurityMasks.Owner
-        };
-
-        if (Audit)
-        {
-            searcher.SecurityMasks |= SecurityMasks.Sacl;
-        }
-
-        foreach (SearchResult obj in searcher.FindAll())
-        {
-            if (obj.Properties[SecurityDescriptor][0] is not byte[] descriptor)
+            using DirectoryEntry root = GetRootEntry(_entryBuilder);
+            using DirectorySearcher searcher = new(root, LdapFilter, [SecurityDescriptor])
             {
-                obj.WriteInvalidSecurityDescriptorError(this);
-                continue;
-            }
-
-            AclBuilder builder = new(obj.Path, descriptor);
-            WriteObject(
-                builder.EnumerateAccessRules(_map),
-                enumerateCollection: true);
+                SizeLimit = Top,
+                Tombstone = IncludeDeletedObjects,
+                SearchScope = SearchScope,
+                PageSize = PageSize,
+                SecurityMasks = SecurityMasks.Group |
+                    SecurityMasks.Dacl |
+                    SecurityMasks.Owner
+            };
 
             if (Audit)
             {
-                WriteObject(
-                    builder.EnumerateAuditRules(_map),
-                    enumerateCollection: true);
+                searcher.SecurityMasks |= SecurityMasks.Sacl;
             }
+
+            foreach (SearchResult obj in searcher.FindAll())
+            {
+                if (!obj.Properties.Contains(SecurityDescriptor) ||
+                    obj.Properties[SecurityDescriptor][0] is not byte[] descriptor)
+                {
+                    obj.WriteInvalidSecurityDescriptorError(this);
+                    continue;
+                }
+
+                AclBuilder builder = new(obj.Path, descriptor);
+                WriteObject(
+                    builder.EnumerateAccessRules(_map!),
+                    enumerateCollection: true);
+
+                if (Audit)
+                {
+                    WriteObject(
+                        builder.EnumerateAuditRules(_map!),
+                        enumerateCollection: true);
+                }
+            }
+        }
+        catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
+        {
+            throw;
+        }
+        catch (IdentityNotMappedException exception)
+        {
+            exception.WriteIdentityNotFoundError(this);
+        }
+        catch (Exception exception)
+        {
+            exception.WriteUnderterminedError(this);
         }
     }
 

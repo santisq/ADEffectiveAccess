@@ -12,9 +12,9 @@ internal sealed class DirectoryEntryBuilder : IDisposable
 
     private readonly AuthenticationTypes _authenticationTypes;
 
-    internal DirectoryEntry RootEntry { get => field ??= Create(); }
+    internal DirectoryEntry RootEntry { get; }
 
-    internal string? Root { get => field ??= RootEntry.Properties["distinguishedName"][0]?.ToString(); }
+    internal string? Root { get; }
 
     internal DirectoryEntryBuilder(
         PSCredential? credential,
@@ -23,6 +23,8 @@ internal sealed class DirectoryEntryBuilder : IDisposable
         _username = credential?.UserName;
         _password = credential?.GetNetworkCredential().Password;
         _authenticationTypes = authenticationTypes;
+        RootEntry = Create();
+        Root = RootEntry.Properties["distinguishedName"][0]?.ToString();
     }
 
     internal DirectoryEntry Create(string? path = null) =>

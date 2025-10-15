@@ -30,14 +30,14 @@ internal static class Extensions
                 new InvalidOperationException($"No Security Descriptor found for '{obj.Path}'."),
                 "InvalidSecurityDescriptorType", ErrorCategory.InvalidResult, obj));
 
-    // internal static void WriteIdentityNotFoundError(this DirectoryEntry root, string identity, PSCmdlet cmdlet)
-    //     => cmdlet.WriteError(
-    //         new ErrorRecord(
-    //             new IdentityNotMappedException(
-    //                 $"Cannot find an object with identity: '{identity}' under: '{root.Properties["distinguishedName"][0]}'."),
-    //             "IvalidIdentity", ErrorCategory.InvalidResult, identity));
+    internal static void WriteIdentityNotFoundError(this IdentityNotMappedException exception, PSCmdlet cmdlet)
+        => cmdlet.WriteError(
+            new ErrorRecord(exception, "IvalidIdentity", ErrorCategory.InvalidResult, null));
+
+    internal static void WriteUnderterminedError(this Exception exception, PSCmdlet cmdlet)
+        => cmdlet.WriteError(
+            new ErrorRecord(exception, "UnderterminedError", ErrorCategory.NotSpecified, null));
 
     internal static IdentityNotMappedException ToIdentityNotFoundException(this string identity, string? rootDn)
-        => new IdentityNotMappedException(
-            $"Cannot find an object with identity: '{identity}' under: '{rootDn}'.");
+        => new($"Cannot find an object with identity: '{identity}' under: '{rootDn}'.");
 }
