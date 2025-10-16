@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace ADEffectiveAccess;
 
-internal class RunspaceSpecificStorage<T>(Func<T> factory)
+internal sealed class RunspaceSpecificStorage<T>(Func<T> factory)
 {
     internal readonly ConditionalWeakTable<Runspace, Lazy<T>> _map = new();
 

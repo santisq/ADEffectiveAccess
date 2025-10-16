@@ -38,7 +38,9 @@ internal static class Extensions
     internal static string ToFilter(this SecurityIdentifier sid) => $"(objectSid={sid})";
 
     internal static string ToFilter(this string identity)
-        => $"(|(samAccountName={identity})(distinguishedName={identity}))";
+        => identity.Contains("=")
+            ? $"(distinguishedName={identity})"
+            : $"(samAccountName={identity})";
 
     internal static string? GetProperty(this DirectoryEntry entry, string property)
     {
@@ -87,6 +89,11 @@ internal static class Extensions
 
     internal static IdentityNotMappedException ToIdentityNotFoundException(this string identity, string? rootDn)
         => new($"Cannot find an object with identity: '{identity}' under: '{rootDn}'.");
+
+    internal static ArgumentTransformationMetadataException ToInvalidIdentityException(this object input)
+        => new(
+            $"Could not convert input '{LanguagePrimitives.ConvertTo<string>(input)}' to a valid Identity. " +
+            "Expected 'ObjectGuid' or 'DistinguishedName' to be present.");
 
     internal static InvalidOperationException ToInitializeException(this string path, string attribute)
         => new(

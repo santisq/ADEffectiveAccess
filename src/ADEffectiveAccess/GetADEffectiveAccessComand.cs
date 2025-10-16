@@ -29,7 +29,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
         ValueFromPipeline = true,
         ValueFromPipelineByPropertyName = true,
         ParameterSetName = IdentitySet)]
-    [Alias("DistinguishedName")]
+    [ADObjectTransform]
     public string? Identity { get; set; }
 
     [Parameter(Position = 0, ParameterSetName = FilterSet)]
