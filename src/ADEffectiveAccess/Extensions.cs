@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.DirectoryServices;
 using System.Management.Automation;
 using System.Security.Principal;
+using System.Text;
 
 namespace ADEffectiveAccess;
 
 internal static class Extensions
 {
+#if !NETCOREAPP
     internal static bool TryAdd<TKey, TValue>(
         this IDictionary<TKey, TValue> dictionary,
         TKey key,
@@ -19,6 +22,23 @@ internal static class Extensions
 
         return !result;
     }
+#endif
+
+    internal static string ToFilter(this Guid guid)
+    {
+        StringBuilder builder = new("(objectGuid=", capacity: 61);
+        foreach (byte b in guid.ToByteArray())
+        {
+            builder.Append($"\\{b:X2}");
+        }
+
+        return builder.Append(')').ToString();
+    }
+
+    internal static string ToFilter(this SecurityIdentifier sid) => $"(objectSid={sid})";
+
+    internal static string ToFilter(this string identity)
+        => $"(|(samAccountName={identity})(distinguishedName={identity}))";
 
     internal static string? GetProperty(this DirectoryEntry entry, string property)
     {
@@ -30,6 +50,22 @@ internal static class Extensions
         return entry.Properties[property][0]?.ToString();
     }
 
+    internal static T GetProperty<T>(this SearchResult search, string property)
+        => LanguagePrimitives.ConvertTo<T>(search.Properties[property][0]);
+
+    internal static bool TryGetProperty<T>(
+        this SearchResult search,
+        string property,
+        [NotNullWhen(true)] out T? value)
+    {
+        value = default;
+        if (!search.Properties.Contains(property))
+        {
+            return false;
+        }
+
+        return LanguagePrimitives.TryConvertTo(search.Properties[property][0], out value);
+    }
 
     internal static void ThrowGuidResolverError(this Exception exception, PSCmdlet cmdlet)
         => cmdlet.ThrowTerminatingError(

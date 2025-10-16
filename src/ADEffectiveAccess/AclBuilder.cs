@@ -24,7 +24,7 @@ public sealed class AclBuilder : ActiveDirectorySecurity
         _group = GetGroup(_targetType);
     }
 
-    internal IEnumerable<EffectiveAccessRule> EnumerateAccessRules(GuidResolver map)
+    internal IEnumerable<IEffectiveRule> EnumerateRules(GuidResolver map, bool includeAudit)
     {
         foreach (ActiveDirectoryAccessRule rule in GetAccessRules(true, true, _targetType))
         {
@@ -34,10 +34,9 @@ public sealed class AclBuilder : ActiveDirectorySecurity
                 InheritedObjectTypeToString = map.Translate(rule.InheritedObjectType, "Any Inherited Object")
             };
         }
-    }
 
-    internal IEnumerable<EffectiveAuditRule> EnumerateAuditRules(GuidResolver map)
-    {
+        if (!includeAudit) yield break;
+
         foreach (ActiveDirectoryAuditRule rule in GetAuditRules(true, true, _targetType))
         {
             yield return new EffectiveAuditRule(rule, _owner, _group, _path)

@@ -3,11 +3,14 @@ using System.Security.Principal;
 
 namespace ADEffectiveAccess;
 
-public abstract class EffectiveRule<T>(
-    T rule, IdentityReference? owner, IdentityReference? group, string? path)
-    where T : AuthorizationRule
+public abstract class EffectiveRule<TRule>(
+    TRule rule,
+    IdentityReference? owner,
+    IdentityReference? group,
+    string? path)
+    : IEffectiveRule where TRule : AuthorizationRule
 {
-    protected T Rule { get; } = rule;
+    protected TRule Rule { get; } = rule;
 
     public RuleType Type { get; protected set; }
 

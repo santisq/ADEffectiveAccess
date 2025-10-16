@@ -85,8 +85,8 @@ internal sealed class GuidResolver
         foreach (SearchResult result in searcher.FindAll())
         {
             map.TryAdd(
-                new Guid((byte[])result.Properties["schemaIdGuid"][0]),
-                result.Properties["cn"][0].ToString()!);
+                new Guid(result.GetProperty<byte[]>("schemaIdGuid")),
+                result.GetProperty<string>("cn"));
         }
     }
 
@@ -107,8 +107,8 @@ internal sealed class GuidResolver
         foreach (SearchResult result in searcher.FindAll())
         {
             map.TryAdd(
-                Guid.Parse(result.Properties["rightsGuid"][0].ToString()!),
-                result.Properties["cn"][0].ToString()!);
+                result.GetProperty<Guid>("rightsGuid"),
+                result.GetProperty<string>("cn"));
         }
     }
 }

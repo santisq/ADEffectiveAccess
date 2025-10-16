@@ -16,6 +16,9 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
     private const string IdentitySet = "Identity";
 
+    private static SecurityMasks Masks = SecurityMasks.Group
+        | SecurityMasks.Dacl | SecurityMasks.Owner;
+
     private DirectoryEntryBuilder? _entryBuilder;
 
     private GuidResolver? _map;
@@ -27,7 +30,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
         ValueFromPipelineByPropertyName = true,
         ParameterSetName = IdentitySet)]
     [Alias("DistinguishedName")]
-    public string Identity { get; set; } = null!;
+    public string? Identity { get; set; }
 
     [Parameter(Position = 0, ParameterSetName = FilterSet)]
     [ValidateNotNullOrEmpty]
@@ -66,10 +69,15 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
     protected override void BeginProcessing()
     {
+        if (Audit)
+        {
+            Masks |= SecurityMasks.Sacl;
+        }
+
         try
         {
             _map ??= GuidResolver.GetFromTLS();
-            _entryBuilder = new DirectoryEntryBuilder(Credential, AuthenticationTypes);
+            _entryBuilder = new DirectoryEntryBuilder(Credential, AuthenticationTypes, SearchBase);
             _map.SetCurrentContext(Server, _entryBuilder);
         }
         catch (Exception exception)
@@ -84,43 +92,27 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
         try
         {
-            using DirectoryEntry root = GetRootEntry(_entryBuilder);
-            using DirectorySearcher searcher = new(root, LdapFilter, [SecurityDescriptor])
+            if (Identity is not null)
+            {
+                GetByIdentity(_entryBuilder, Identity);
+                return;
+            }
+
+            using DirectorySearcher searcher = new(
+                searchRoot: _entryBuilder.SearchBase,
+                filter: LdapFilter,
+                propertiesToLoad: [SecurityDescriptor])
             {
                 SizeLimit = Top,
                 Tombstone = IncludeDeletedObjects,
                 SearchScope = SearchScope,
                 PageSize = PageSize,
-                SecurityMasks = SecurityMasks.Group |
-                    SecurityMasks.Dacl |
-                    SecurityMasks.Owner
+                SecurityMasks = Masks
             };
-
-            if (Audit)
-            {
-                searcher.SecurityMasks |= SecurityMasks.Sacl;
-            }
 
             foreach (SearchResult obj in searcher.FindAll())
             {
-                if (!obj.Properties.Contains(SecurityDescriptor) ||
-                    obj.Properties[SecurityDescriptor][0] is not byte[] descriptor)
-                {
-                    obj.WriteInvalidSecurityDescriptorError(this);
-                    continue;
-                }
-
-                AclBuilder builder = new(obj.Path, descriptor);
-                WriteObject(
-                    builder.EnumerateAccessRules(_map!),
-                    enumerateCollection: true);
-
-                if (Audit)
-                {
-                    WriteObject(
-                        builder.EnumerateAuditRules(_map!),
-                        enumerateCollection: true);
-                }
+                WriteRules(obj);
             }
         }
         catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
@@ -137,37 +129,48 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
         }
     }
 
-    private static string? TryGetIdentityPath(string? identity) => identity switch
+    private void WriteRules(SearchResult obj)
     {
-        _ when identity is null => null,
-        _ when Guid.TryParse(identity, out Guid guid) => $"<GUID={guid:D}>",
-        _ when LanguagePrimitives.TryConvertTo(identity, out SecurityIdentifier sid) => $"<SID={sid}>",
-        _ => null
-    };
-
-    private DirectoryEntry GetRootEntry(DirectoryEntryBuilder builder)
-    {
-        const string dn = "distinguishedName";
-        if (ParameterSetName == FilterSet)
+        if (!obj.TryGetProperty(SecurityDescriptor, out byte[]? descriptor))
         {
-            return builder.Create(SearchBase);
+            obj.WriteInvalidSecurityDescriptorError(this);
+            return;
         }
 
-        string? path = TryGetIdentityPath(Identity);
-        if (path is not null)
+        AclBuilder builder = new(obj.Path, descriptor);
+        WriteObject(
+            builder.EnumerateRules(_map!, includeAudit: Audit),
+            enumerateCollection: true);
+    }
+
+    private void GetByIdentity(DirectoryEntryBuilder builder, string identity)
+    {
+        string ldapFilter = identity switch
         {
-            return builder.Create(path);
-        }
+            _ when Guid.TryParse(identity, out Guid guid) => guid.ToFilter(),
+            _ when LanguagePrimitives.TryConvertTo(identity, out SecurityIdentifier sid) => sid.ToFilter(),
+            _ => identity.ToFilter()
+        };
 
         using DirectorySearcher searcher = new(
             searchRoot: builder.RootEntry,
-            filter: $"(|({dn}={Identity})(samAccountName={Identity}))",
-            propertiesToLoad: [dn]);
+            filter: ldapFilter,
+            propertiesToLoad: [SecurityDescriptor])
+        {
+            SecurityMasks = Masks,
+            Tombstone = IncludeDeletedObjects
+        };
 
-        SearchResult? result = searcher.FindOne()
-            ?? throw Identity.ToIdentityNotFoundException(builder.Root);
+        SearchResult result = searcher.FindOne()
+            ?? throw identity.ToIdentityNotFoundException(builder.Root);
 
-        return builder.Create(result.Properties[dn][0].ToString());
+        if (!result.TryGetProperty(SecurityDescriptor, out byte[]? descriptor))
+        {
+            result.WriteInvalidSecurityDescriptorError(this);
+            return;
+        }
+
+        WriteRules(result);
     }
 
     public void Dispose()
