@@ -20,6 +20,17 @@ internal static class Extensions
         return !result;
     }
 
+    internal static string? GetProperty(this DirectoryEntry entry, string property)
+    {
+        if (!entry.Properties.Contains(property))
+        {
+            return null;
+        }
+
+        return entry.Properties[property][0]?.ToString();
+    }
+
+
     internal static void ThrowGuidResolverError(this Exception exception, PSCmdlet cmdlet)
         => cmdlet.ThrowTerminatingError(
             new ErrorRecord(exception, "CreateGuidResolverError", ErrorCategory.ConnectionError, null));
@@ -40,4 +51,9 @@ internal static class Extensions
 
     internal static IdentityNotMappedException ToIdentityNotFoundException(this string identity, string? rootDn)
         => new($"Cannot find an object with identity: '{identity}' under: '{rootDn}'.");
+
+    internal static InvalidOperationException ToInitializeException(this string path, string attribute)
+        => new(
+            "Failed to initialize GuidResolver: " +
+            $"The '{attribute}' attribute is missing or null in the RootDSE response for path '{path}'.");
 }

@@ -6,7 +6,13 @@ namespace ADEffectiveAccess;
 
 internal sealed class GuidResolver
 {
-    private readonly Dictionary<string?, Dictionary<Guid, string>> _map = [];
+    private const string DefaultContext = "defaultNamingContext";
+
+    private const string SchemaContext = "schemaNamingContext";
+
+    private const string ConfigurationContext = "configurationNamingContext";
+
+    private readonly Dictionary<string, Dictionary<Guid, string>> _map = [];
 
     private Dictionary<Guid, string>? _current;
 
@@ -20,33 +26,49 @@ internal sealed class GuidResolver
     {
         string path = server is null ? "RootDSE" : $"{server}/RootDSE";
         using DirectoryEntry root = builder.Create(path);
-        string? ctxName = root.Properties["defaultNamingContext"][0]?.ToString();
-        if (_map.TryGetValue(ctxName, out Dictionary<Guid, string> current))
+        string? ctxName = root.GetProperty(DefaultContext)
+            ?? throw path.ToInitializeException(DefaultContext);
+
+        if (_map.TryGetValue(ctxName, out Dictionary<Guid, string>? current))
         {
             _current = current;
             return;
         }
 
         current = [];
-        string? ctxSchema = root.Properties["schemaNamingContext"][0]?.ToString();
-        string? ctxConfig = root.Properties["configurationNamingContext"][0]?.ToString();
-        if (ctxSchema is not null) PopulateSchema(ctxSchema, current, builder);
-        if (ctxConfig is not null) PopulateExtendedRights(ctxConfig, current, builder);
+
+        PopulateSchema(
+            schemaNamingContext: root.GetProperty(SchemaContext)
+                ?? throw path.ToInitializeException(SchemaContext),
+            map: current,
+            builder: builder);
+
+        PopulateExtendedRights(
+            configurationNamingContext: root.GetProperty(ConfigurationContext)
+                ?? throw path.ToInitializeException(ConfigurationContext),
+            current,
+            builder);
+
         _map[ctxName] = current;
         _current = current;
     }
 
     internal string Translate(Guid guid, string defaultValue)
     {
-        if (guid == Guid.Empty || _current!.TryGetValue(guid, out defaultValue))
+        if (guid == Guid.Empty)
         {
             return defaultValue;
+        }
+
+        if (_current!.TryGetValue(guid, out string? value))
+        {
+            return value;
         }
 
         return guid.ToString();
     }
 
-    private void PopulateSchema(
+    private static void PopulateSchema(
         string schemaNamingContext,
         Dictionary<Guid, string> map,
         DirectoryEntryBuilder builder)
@@ -64,11 +86,11 @@ internal sealed class GuidResolver
         {
             map.TryAdd(
                 new Guid((byte[])result.Properties["schemaIdGuid"][0]),
-                result.Properties["cn"][0].ToString());
+                result.Properties["cn"][0].ToString()!);
         }
     }
 
-    private void PopulateExtendedRights(
+    private static void PopulateExtendedRights(
         string configurationNamingContext,
         Dictionary<Guid, string> map,
         DirectoryEntryBuilder builder)
@@ -85,8 +107,8 @@ internal sealed class GuidResolver
         foreach (SearchResult result in searcher.FindAll())
         {
             map.TryAdd(
-                Guid.Parse(result.Properties["rightsGuid"][0].ToString()),
-                result.Properties["cn"][0].ToString());
+                Guid.Parse(result.Properties["rightsGuid"][0].ToString()!),
+                result.Properties["cn"][0].ToString()!);
         }
     }
 }

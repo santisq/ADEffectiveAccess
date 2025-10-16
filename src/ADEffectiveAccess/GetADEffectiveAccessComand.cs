@@ -26,7 +26,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
         ValueFromPipeline = true,
         ValueFromPipelineByPropertyName = true,
         ParameterSetName = IdentitySet)]
-    [Alias("DistinguishedName", "ObjectGuid", "ObjectSid", "SamAccountName")]
+    [Alias("DistinguishedName")]
     public string Identity { get; set; } = null!;
 
     [Parameter(Position = 0, ParameterSetName = FilterSet)]
@@ -137,7 +137,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
         }
     }
 
-    private string? TryGetIdentityPath(string? identity) => identity switch
+    private static string? TryGetIdentityPath(string? identity) => identity switch
     {
         _ when identity is null => null,
         _ when Guid.TryParse(identity, out Guid guid) => $"<GUID={guid:D}>",
