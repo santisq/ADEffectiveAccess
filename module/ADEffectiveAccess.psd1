@@ -9,7 +9,9 @@
 @{
 
     # Script module or binary module file associated with this manifest.
-    RootModule        = 'bin/netstandard2.0/ADEffectiveAccess.dll'
+    RootModule        =
+        if ($PSEdition -eq 'Core') { 'bin/net8.0-windows/ADEffectiveAccess.dll' }
+        else { 'bin/net472/ADEffectiveAccess.dll' }
 
     # Version number of this module.
     ModuleVersion     = '0.0.1'
