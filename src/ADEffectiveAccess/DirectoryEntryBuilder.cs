@@ -41,7 +41,9 @@ internal sealed class DirectoryEntryBuilder : IDisposable
             _ => $"LDAP://{server}/{searchBase}"
         };
 
-        return new(path, _username, _password, _authenticationTypes);
+        return path is null
+            ? RootEntry
+            : new DirectoryEntry(path, _username, _password, _authenticationTypes);
     }
 
     public void Dispose()
