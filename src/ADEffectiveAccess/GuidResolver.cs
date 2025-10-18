@@ -22,12 +22,10 @@ internal sealed class GuidResolver
 
     internal static GuidResolver GetFromTLS() => _state.GetFromTLS();
 
-    internal void SetCurrentContext(string? server, DirectoryEntryBuilder builder)
+    internal void SetContext(string? server, DirectoryEntryBuilder builder)
     {
-        string path = server is null ? "RootDSE" : $"{server}/RootDSE";
-        using DirectoryEntry root = builder.Create(path);
-        string? ctxName = root.GetProperty(DefaultContext)
-            ?? throw path.ToInitializeException(DefaultContext);
+        using DirectoryEntry rootDSE = builder.Create(server, "RootDSE");
+        string ctxName = rootDSE.GetRootProperty(DefaultContext);
 
         if (_map.TryGetValue(ctxName, out Dictionary<Guid, string>? current))
         {
@@ -35,22 +33,12 @@ internal sealed class GuidResolver
             return;
         }
 
-        current = [];
+        _current = _map[ctxName] = [];
+        string schemaNamingContext = rootDSE.GetRootProperty(SchemaContext);
+        string extendedRights = $"CN=Extended-Rights,{rootDSE.GetRootProperty(ConfigurationContext)}";
 
-        PopulateSchema(
-            schemaNamingContext: root.GetProperty(SchemaContext)
-                ?? throw path.ToInitializeException(SchemaContext),
-            map: current,
-            builder: builder);
-
-        PopulateExtendedRights(
-            configurationNamingContext: root.GetProperty(ConfigurationContext)
-                ?? throw path.ToInitializeException(ConfigurationContext),
-            current,
-            builder);
-
-        _map[ctxName] = current;
-        _current = current;
+        PopulateSchema(builder.Create(server, schemaNamingContext), _current);
+        PopulateExtendedRights(builder.Create(server, extendedRights), _current);
     }
 
     internal string Translate(Guid guid, string defaultValue)
@@ -68,47 +56,45 @@ internal sealed class GuidResolver
         return guid.ToString();
     }
 
-    private static void PopulateSchema(
-        string schemaNamingContext,
-        Dictionary<Guid, string> map,
-        DirectoryEntryBuilder builder)
+    private static void PopulateSchema(DirectoryEntry root, Dictionary<Guid, string> map)
     {
-        using DirectoryEntry root = builder.Create(schemaNamingContext);
-        using DirectorySearcher searcher = new(
-            searchRoot: root,
-            filter: "(&(schemaIdGuid=*)(|(objectClass=attributeSchema)(objectClass=classSchema)))",
-            propertiesToLoad: ["cn", "schemaIdGuid"])
+        using (root)
         {
-            PageSize = 1000
-        };
+            using DirectorySearcher searcher = new(
+                searchRoot: root,
+                filter: "(&(schemaIdGuid=*)(|(objectClass=attributeSchema)(objectClass=classSchema)))",
+                propertiesToLoad: ["cn", "schemaIdGuid"])
+            {
+                PageSize = 1000
+            };
 
-        foreach (SearchResult result in searcher.FindAll())
-        {
-            map.TryAdd(
-                new Guid(result.GetProperty<byte[]>("schemaIdGuid")),
-                result.GetProperty<string>("cn"));
+            foreach (SearchResult result in searcher.FindAll())
+            {
+                map.TryAdd(
+                    new Guid(result.GetProperty<byte[]>("schemaIdGuid")),
+                    result.GetProperty<string>("cn"));
+            }
         }
     }
 
-    private static void PopulateExtendedRights(
-        string configurationNamingContext,
-        Dictionary<Guid, string> map,
-        DirectoryEntryBuilder builder)
+    private static void PopulateExtendedRights(DirectoryEntry root, Dictionary<Guid, string> map)
     {
-        using DirectoryEntry root = builder.Create($"CN=Extended-Rights,{configurationNamingContext}");
-        using DirectorySearcher searcher = new(
-            searchRoot: root,
-            filter: "(objectClass=controlAccessRight)",
-            propertiesToLoad: ["cn", "rightsGuid"])
+        using (root)
         {
-            PageSize = 1000
-        };
+            using DirectorySearcher searcher = new(
+                searchRoot: root,
+                filter: "(objectClass=controlAccessRight)",
+                propertiesToLoad: ["cn", "rightsGuid"])
+            {
+                PageSize = 1000
+            };
 
-        foreach (SearchResult result in searcher.FindAll())
-        {
-            map.TryAdd(
-                result.GetProperty<Guid>("rightsGuid"),
-                result.GetProperty<string>("cn"));
+            foreach (SearchResult result in searcher.FindAll())
+            {
+                map.TryAdd(
+                    result.GetProperty<Guid>("rightsGuid"),
+                    result.GetProperty<string>("cn"));
+            }
         }
     }
 }

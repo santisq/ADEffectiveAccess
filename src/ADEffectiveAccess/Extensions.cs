@@ -38,19 +38,13 @@ internal static class Extensions
     internal static string ToFilter(this SecurityIdentifier sid) => $"(objectSid={sid})";
 
     internal static string ToFilter(this string identity)
+#if NETCOREAPP
+        => identity.Contains('=')
+#else
         => identity.Contains("=")
+#endif
             ? $"(distinguishedName={identity})"
             : $"(samAccountName={identity})";
-
-    internal static string? GetProperty(this DirectoryEntry entry, string property)
-    {
-        if (!entry.Properties.Contains(property))
-        {
-            return null;
-        }
-
-        return entry.Properties[property][0]?.ToString();
-    }
 
     internal static T GetProperty<T>(this SearchResult search, string property)
         => LanguagePrimitives.ConvertTo<T>(search.Properties[property][0]);
@@ -68,6 +62,9 @@ internal static class Extensions
 
         return LanguagePrimitives.TryConvertTo(search.Properties[property][0], out value);
     }
+
+    internal static string GetRootProperty(this DirectoryEntry root, string property) =>
+        root.Properties[property][0]?.ToString() ?? throw root.ToInitializeResolverException(property);
 
     internal static void ThrowGuidResolverError(this Exception exception, PSCmdlet cmdlet)
         => cmdlet.ThrowTerminatingError(
@@ -95,8 +92,8 @@ internal static class Extensions
             $"Could not convert input '{LanguagePrimitives.ConvertTo<string>(input)}' to a valid Identity. " +
             "Expected 'ObjectGuid' or 'DistinguishedName' to be present.");
 
-    internal static InvalidOperationException ToInitializeException(this string path, string attribute)
+    internal static InvalidOperationException ToInitializeResolverException(this DirectoryEntry entry, string attribute)
         => new(
             "Failed to initialize GuidResolver: " +
-            $"The '{attribute}' attribute is missing or null in the RootDSE response for path '{path}'.");
+            $"The '{attribute}' attribute is missing or null in the RootDSE response for path '{entry.Properties["defaultNamingContext"]}'.");
 }

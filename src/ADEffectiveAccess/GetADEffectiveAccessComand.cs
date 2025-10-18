@@ -76,9 +76,14 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
         try
         {
+            _entryBuilder = new DirectoryEntryBuilder(
+                credential: Credential,
+                authenticationTypes: AuthenticationTypes,
+                server: Server,
+                searchBase: SearchBase);
+
             _map ??= GuidResolver.GetFromTLS();
-            _entryBuilder = new DirectoryEntryBuilder(Credential, AuthenticationTypes, SearchBase);
-            _map.SetCurrentContext(Server, _entryBuilder);
+            _map.SetContext(Server, _entryBuilder);
         }
         catch (Exception exception)
         {
