@@ -4,6 +4,8 @@ using System.DirectoryServices;
 using System.Management.Automation;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
+
 #if !NETCOREAPP
 using System.Collections.Generic;
 #endif
@@ -40,13 +42,19 @@ internal static class Extensions
     internal static string ToFilter(this SecurityIdentifier sid) => $"(objectSid={sid})";
 
     internal static string ToFilter(this string identity)
-#if NETCOREAPP
-        => identity.Contains('=')
-#else
-        => identity.Contains("=")
-#endif
-            ? $"(distinguishedName={identity})"
-            : $"(samAccountName={identity})";
+    {
+        if (!identity.Contains("="))
+        {
+            return $"(samAccountName={identity})";
+        }
+
+        if (!identity.Contains("DEL:"))
+        {
+            return $"(distinguishedName={identity})";
+        }
+
+        return $"(&(isDeleted=TRUE)({Regex.Replace(identity, @"(?<!\\),.+", "")}))";
+    }
 
     internal static T GetProperty<T>(this SearchResult search, string property)
         => LanguagePrimitives.ConvertTo<T>(search.Properties[property][0]);

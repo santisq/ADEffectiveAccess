@@ -20,7 +20,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
     private SecurityMasks _masks = SecurityMasks.Group | SecurityMasks.Dacl | SecurityMasks.Owner;
 
-    private DirectoryEntryBuilder? _entryBuilder;
+    private DirectoryEntryBuilder? _builder;
 
     private GuidResolver? _map;
 
@@ -77,14 +77,14 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
         try
         {
-            _entryBuilder = new DirectoryEntryBuilder(
+            _builder = new DirectoryEntryBuilder(
                 credential: Credential,
                 authenticationTypes: AuthenticationTypes,
                 server: Server,
                 searchBase: SearchBase);
 
             _map = GuidResolver.GetFromTLS();
-            _map.SetContext(Server, _entryBuilder);
+            _map.SetContext(Server, _builder);
         }
         catch (Exception exception)
         {
@@ -94,19 +94,19 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
     protected override void ProcessRecord()
     {
-        Assert(_entryBuilder is not null);
+        Assert(_builder is not null);
         Assert(_map is not null);
 
         try
         {
             if (Identity is not null)
             {
-                GetByIdentity(_entryBuilder, Identity);
+                GetByIdentity(_builder, Identity);
                 return;
             }
 
             using DirectorySearcher searcher = new(
-                searchRoot: _entryBuilder.SearchBase,
+                searchRoot: _builder.SearchBase,
                 filter: LdapFilter,
                 propertiesToLoad: [SecurityDescriptor])
             {
@@ -162,7 +162,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
         };
 
         using DirectorySearcher searcher = new(
-            searchRoot: builder.RootEntry,
+            searchRoot: builder.DomainEntry,
             filter: ldapFilter,
             propertiesToLoad: [SecurityDescriptor])
         {
@@ -171,7 +171,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
         };
 
         SearchResult result = searcher.FindOne()
-            ?? throw identity.ToIdentityNotFoundException(builder.Root);
+            ?? throw identity.ToIdentityNotFoundException(builder.DomainDistinguishedName);
 
         WriteRules(result);
     }
@@ -182,7 +182,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
     public void Dispose()
     {
-        _entryBuilder?.Dispose();
+        _builder?.Dispose();
         GC.SuppressFinalize(this);
     }
 }

@@ -12,11 +12,14 @@ internal sealed class DirectoryEntryBuilder : IDisposable
 
     private readonly AuthenticationTypes _authenticationTypes;
 
-    internal DirectoryEntry RootEntry { get; }
+    internal DirectoryEntry DomainEntry { get; }
 
     internal DirectoryEntry SearchBase { get; }
 
-    internal string? Root { get; }
+    internal string? DomainDistinguishedName
+    {
+        get => DomainEntry.Properties["distinguishedName"][0]?.ToString();
+    }
 
     internal DirectoryEntryBuilder(
         PSCredential? credential,
@@ -27,8 +30,8 @@ internal sealed class DirectoryEntryBuilder : IDisposable
         _username = credential?.UserName;
         _password = credential?.GetNetworkCredential().Password;
         _authenticationTypes = authenticationTypes;
-        RootEntry = Create(server: server);
-        SearchBase = Create(searchBase: searchBase);
+        DomainEntry = Create(server: server);
+        SearchBase = searchBase is null ? DomainEntry : Create(searchBase: searchBase);
     }
 
     internal DirectoryEntry Create(string? server = null, string? searchBase = null)
@@ -41,14 +44,12 @@ internal sealed class DirectoryEntryBuilder : IDisposable
             _ => $"LDAP://{server}/{searchBase}"
         };
 
-        return path is null
-            ? RootEntry
-            : new DirectoryEntry(path, _username, _password, _authenticationTypes);
+        return new DirectoryEntry(path, _username, _password, _authenticationTypes);
     }
 
     public void Dispose()
     {
-        RootEntry.Dispose();
+        DomainEntry.Dispose();
         SearchBase.Dispose();
         GC.SuppressFinalize(this);
     }
