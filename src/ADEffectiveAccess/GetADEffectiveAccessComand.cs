@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.DirectoryServices;
 using System.Management.Automation;
 using System.Security.Principal;
@@ -16,8 +18,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
     private const string IdentitySet = "Identity";
 
-    private static SecurityMasks Masks = SecurityMasks.Group
-        | SecurityMasks.Dacl | SecurityMasks.Owner;
+    private SecurityMasks _masks = SecurityMasks.Group | SecurityMasks.Dacl | SecurityMasks.Owner;
 
     private DirectoryEntryBuilder? _entryBuilder;
 
@@ -71,7 +72,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
     {
         if (Audit)
         {
-            Masks |= SecurityMasks.Sacl;
+            _masks |= SecurityMasks.Sacl;
         }
 
         try
@@ -82,7 +83,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
                 server: Server,
                 searchBase: SearchBase);
 
-            _map ??= GuidResolver.GetFromTLS();
+            _map = GuidResolver.GetFromTLS();
             _map.SetContext(Server, _entryBuilder);
         }
         catch (Exception exception)
@@ -93,7 +94,8 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
     protected override void ProcessRecord()
     {
-        if (_entryBuilder is null) return;
+        Assert(_entryBuilder is not null);
+        Assert(_map is not null);
 
         try
         {
@@ -112,12 +114,12 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
                 Tombstone = IncludeDeletedObjects,
                 SearchScope = SearchScope,
                 PageSize = PageSize,
-                SecurityMasks = Masks
+                SecurityMasks = _masks
             };
 
-            foreach (SearchResult obj in searcher.FindAll())
+            foreach (SearchResult result in searcher.FindAll())
             {
-                WriteRules(obj);
+                WriteRules(result);
             }
         }
         catch (Exception _) when (_ is PipelineStoppedException or FlowControlException)
@@ -134,17 +136,19 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
         }
     }
 
-    private void WriteRules(SearchResult obj)
+    private void WriteRules(SearchResult searchResult)
     {
-        if (!obj.TryGetProperty(SecurityDescriptor, out byte[]? descriptor))
+        Assert(_map is not null);
+
+        if (!searchResult.TryGetProperty(SecurityDescriptor, out byte[]? descriptor))
         {
-            obj.WriteInvalidSecurityDescriptorError(this);
+            searchResult.WriteInvalidSecurityDescriptorError(this);
             return;
         }
 
-        AclBuilder builder = new(obj.Path, descriptor);
+        AclBuilder builder = new(searchResult.Path, descriptor);
         WriteObject(
-            builder.EnumerateRules(_map!, includeAudit: Audit),
+            builder.EnumerateRules(_map, includeAudit: Audit),
             enumerateCollection: true);
     }
 
@@ -162,7 +166,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
             filter: ldapFilter,
             propertiesToLoad: [SecurityDescriptor])
         {
-            SecurityMasks = Masks,
+            SecurityMasks = _masks,
             Tombstone = IncludeDeletedObjects
         };
 
@@ -171,6 +175,10 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
 
         WriteRules(result);
     }
+
+    [Conditional("DEBUG")]
+    private static void Assert([DoesNotReturnIf(false)] bool condition, string? message = null)
+        => Debug.Assert(condition, message);
 
     public void Dispose()
     {
