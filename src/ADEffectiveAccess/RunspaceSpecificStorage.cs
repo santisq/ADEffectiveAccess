@@ -7,11 +7,11 @@ namespace ADEffectiveAccess;
 
 internal sealed class RunspaceSpecificStorage<T>(Func<T> factory)
 {
-    internal readonly ConditionalWeakTable<Runspace, Lazy<T>> _map = new();
-
     private readonly Func<T> _factory = factory;
 
     private readonly LazyThreadSafetyMode _mode = LazyThreadSafetyMode.ExecutionAndPublication;
+
+    internal readonly ConditionalWeakTable<Runspace, Lazy<T>> _map = new();
 
     internal T GetFromTLS() => GetForRunspace(Runspace.DefaultRunspace);
 

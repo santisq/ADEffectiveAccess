@@ -1,10 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.DirectoryServices;
 using System.Management.Automation;
 using System.Security.Principal;
 using System.Text;
+#if !NETCOREAPP
+using System.Collections.Generic;
+#endif
 
 namespace ADEffectiveAccess;
 

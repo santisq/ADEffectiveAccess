@@ -169,12 +169,6 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
         SearchResult result = searcher.FindOne()
             ?? throw identity.ToIdentityNotFoundException(builder.Root);
 
-        if (!result.TryGetProperty(SecurityDescriptor, out byte[]? descriptor))
-        {
-            result.WriteInvalidSecurityDescriptorError(this);
-            return;
-        }
-
         WriteRules(result);
     }
 

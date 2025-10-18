@@ -25,15 +25,15 @@ internal sealed class GuidResolver
     internal void SetContext(string? server, DirectoryEntryBuilder builder)
     {
         using DirectoryEntry rootDSE = builder.Create(server, "RootDSE");
-        string ctxName = rootDSE.GetRootProperty(DefaultContext);
+        string context = rootDSE.GetRootProperty(DefaultContext);
 
-        if (_map.TryGetValue(ctxName, out Dictionary<Guid, string>? current))
+        if (_map.TryGetValue(context, out Dictionary<Guid, string>? current))
         {
             _current = current;
             return;
         }
 
-        _current = _map[ctxName] = [];
+        _current = _map[context] = [];
         string schemaNamingContext = rootDSE.GetRootProperty(SchemaContext);
         string extendedRights = $"CN=Extended-Rights,{rootDSE.GetRootProperty(ConfigurationContext)}";
 
