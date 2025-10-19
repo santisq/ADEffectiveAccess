@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [0.0.1] - 2025-10-19
+## [1.0.0] - 2025-10-19
 
 - Rewritten in C# for improved performance and uploaded to the PowerShell Gallery.
 - Added enhanced functionality compared to the [original PowerShell version](https://gist.github.com/santisq/a84af707780b1168f1fa390632096a5a), including LDAP search (`-LdapFilter`), audit rules (`-Audit`), deleted object support (`-IncludeDeletedObjects`), and pipeline input from AD cmdlets. See the [Parameters section](./docs/en-US/Get-ADEffectiveAccess.md#parameters) for details.
@@ -34,8 +34,6 @@
     TotalMinutes      : 0.00014236
     TotalSeconds      : 0.0085416
     TotalMilliseconds : 8.5416
-
-    PS ..\ADEffectiveAccess>
     ```
 
 - Enhanced error handling for invalid search bases and identity resolution, ensuring robust validation.
