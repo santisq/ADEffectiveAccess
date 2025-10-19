@@ -88,6 +88,7 @@ public sealed class GetADEffectiveAccessComand : PSCmdlet, IDisposable
         }
         catch (Exception exception)
         {
+            GuidResolver.ClearFromTLS();
             exception.ThrowGuidResolverError(this);
         }
     }

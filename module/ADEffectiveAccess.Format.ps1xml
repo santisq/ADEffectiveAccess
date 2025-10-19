@@ -18,15 +18,15 @@
             <Alignment>Left</Alignment>
           </TableColumnHeader>
           <TableColumnHeader>
-            <Label>ActiveDirectoryRights</Label>
-            <Alignment>Left</Alignment>
-          </TableColumnHeader>
-          <TableColumnHeader>
             <Label>ObjectType</Label>
             <Alignment>Left</Alignment>
           </TableColumnHeader>
           <TableColumnHeader>
             <Label>InheritedObjectType</Label>
+            <Alignment>Left</Alignment>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>ActiveDirectoryRights</Label>
             <Alignment>Left</Alignment>
           </TableColumnHeader>
         </TableHeaders>
@@ -37,13 +37,13 @@
                 <PropertyName>IdentityReference</PropertyName>
               </TableColumnItem>
               <TableColumnItem>
-                <PropertyName>ActiveDirectoryRights</PropertyName>
-              </TableColumnItem>
-              <TableColumnItem>
                 <PropertyName>ObjectTypeToString</PropertyName>
               </TableColumnItem>
               <TableColumnItem>
                 <PropertyName>InheritedObjectTypeToString</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>ActiveDirectoryRights</PropertyName>
               </TableColumnItem>
             </TableColumnItems>
           </TableRowEntry>

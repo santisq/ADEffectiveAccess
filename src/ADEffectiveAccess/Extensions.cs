@@ -58,7 +58,10 @@ internal static class Extensions
     }
 
     internal static T GetProperty<T>(this SearchResult search, string property)
-        => LanguagePrimitives.ConvertTo<T>(search.Properties[property][0]);
+        => TryGetProperty(search, property, out T? value) ? value
+            : throw new ArgumentNullException(
+                $"Attribute '{property}' is null or empty for path '{search.Path}'.");
+
 
     internal static bool TryGetProperty<T>(
         this SearchResult search,

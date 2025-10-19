@@ -31,7 +31,7 @@ internal sealed class DirectoryEntryBuilder : IDisposable
         _password = credential?.GetNetworkCredential().Password;
         _authenticationTypes = authenticationTypes;
         DomainEntry = Create(server: server);
-        SearchBase = searchBase is null ? DomainEntry : Create(searchBase: searchBase);
+        SearchBase = ResolveSearchBase(searchBase);
     }
 
     internal DirectoryEntry Create(string? server = null, string? searchBase = null)
@@ -47,7 +47,31 @@ internal sealed class DirectoryEntryBuilder : IDisposable
         if (path is not null && !path.Contains("://"))
             path = $"LDAP://{path}";
 
-        return new DirectoryEntry(path, _username, _password, _authenticationTypes);
+        DirectoryEntry entry = new(path, _username, _password, _authenticationTypes);
+        _ = entry.NativeObject; // force bind
+        return entry;
+    }
+
+    private DirectoryEntry ResolveSearchBase(string? searchBase)
+    {
+        if (searchBase is null) return DomainEntry;
+
+        if (!searchBase.Contains("="))
+            throw new ArgumentException(
+                $"SearchBase '{searchBase}' is not a valid DistinguishedName. " +
+                "It must follow the format 'OU=Name,DC=domain,DC=com' for an Organizational Unit or Container.",
+                nameof(searchBase));
+
+        try
+        {
+            return Create(searchBase: searchBase);
+        }
+        catch (Exception exception)
+        {
+            throw new ArgumentException(
+                $"SearchBase '{searchBase}' could not be found in '{DomainDistinguishedName}'.",
+                nameof(searchBase), innerException: exception);
+        }
     }
 
     public void Dispose()

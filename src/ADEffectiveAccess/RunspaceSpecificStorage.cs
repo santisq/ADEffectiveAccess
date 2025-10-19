@@ -17,4 +17,6 @@ internal sealed class RunspaceSpecificStorage<T>(Func<T> factory)
 
     internal T GetForRunspace(Runspace runspace)
         => _map.GetValue(runspace, _ => new Lazy<T>(() => _factory(), _mode)).Value;
+
+    internal void ClearFromTLS() => _map.Remove(Runspace.DefaultRunspace);
 }

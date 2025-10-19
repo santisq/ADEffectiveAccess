@@ -22,6 +22,8 @@ internal sealed class GuidResolver
 
     internal static GuidResolver GetFromTLS() => _state.GetFromTLS();
 
+    internal static void ClearFromTLS() => _state.ClearFromTLS();
+
     internal void SetContext(string? server, DirectoryEntryBuilder builder)
     {
         using DirectoryEntry rootDSE = builder.Create(server, "RootDSE");

@@ -159,7 +159,6 @@ Specifies the AD DS instance to connect to. Accepts:
 - Fully qualified domain name
 - NetBIOS name
 - Directory server name (with optional port, e.g. `myDC01:636`)
-- Global Catalog (e.g. `GC://myChildDomain`)
 
 Defaults to the current domain if not specified.
 
