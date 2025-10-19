@@ -39,10 +39,13 @@ internal sealed class DirectoryEntryBuilder : IDisposable
         string? path = (server, searchBase) switch
         {
             (null, null) => null,
-            (not null, null) => $"LDAP://{server}",
-            (null, not null) => $"LDAP://{searchBase}",
-            _ => $"LDAP://{server}/{searchBase}"
+            (not null, null) => server,
+            (null, not null) => searchBase,
+            _ => $"{server}/{searchBase}"
         };
+
+        if (path is not null && !path.Contains("://"))
+            path = $"LDAP://{path}";
 
         return new DirectoryEntry(path, _username, _password, _authenticationTypes);
     }
