@@ -298,10 +298,10 @@ Represents effective audit rules with resolved `ObjectType` and `InheritedObject
 
 ## RELATED LINKS
 
-### [ActiveDirectoryAccessRule](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.activedirectoryaccessrule)
+[__ActiveDirectoryAccessRule__](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.activedirectoryaccessrule)
 
-### [ActiveDirectoryAuditRule](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.activedirectoryauditrule)
+[__ActiveDirectoryAuditRule__](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.activedirectoryauditrule)
 
-### [Active Directory Module](https://learn.microsoft.com/en-us/powershell/module/activedirectory)
+[__Active Directory Module__](https://learn.microsoft.com/en-us/powershell/module/activedirectory)
 
-### [DirectorySearcher](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.directorysearcher)
+[__DirectorySearcher__](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.directorysearcher)
