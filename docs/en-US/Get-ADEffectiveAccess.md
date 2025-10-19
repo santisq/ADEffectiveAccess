@@ -51,13 +51,45 @@ Unlike `Get-Acl`, there is no dependency on the Active Directory module and incl
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Get ACL for a specific user by sAMAccountName
 
-```
-PS C:\> {{ Add example code here }}
+```powershell
+PS \> Get-ADEffectiveAccess -Identity John.Doe
 ```
 
-{{ Add example description here }}
+Retrieves the effective access rules for the user `John.Doe` in the current domain.
+
+### Example 2: Get ACLs for all users in an OU with audit rules
+
+```powershell
+PS \> Get-ADEffectiveAccess -LdapFilter "(objectCategory=person)" -SearchBase "OU=Users,DC=mylab,DC=local" -Audit
+```
+
+Retrieves access and audit rules for all user objects in the `Users` OU, including system access control list (SACL) rules.
+
+### Example 3: Pipe AD user object to retrieve ACL
+
+```powershell
+PS \> Get-ADUser -Identity "jdoe" | Get-ADEffectiveAccess
+```
+
+Uses pipeline input from `Get-ADUser` to retrieve effective access rules for the user `jdoe`.
+
+### Example 4: Get ACLs for deleted objects with a limit
+
+```powershell
+PS \> Get-ADEffectiveAccess -LdapFilter "(objectClass=group)" -IncludeDeletedObjects -Top 10
+```
+
+Retrieves access rules for up to 10 deleted `group` objects in the domain, including tombstone objects.
+
+### Example 5: Query ACLs on a specific server with custom authentication
+
+```powershell
+PS \> Get-ADEffectiveAccess -LdapFilter "(objectClass=computer)" -Server "myChildDomain.local:636" -AuthenticationTypes Secure, FastBind
+```
+
+Retrieves access rules for all `computer` objects in a child domain with secure authentication and fast bind.
 
 ## PARAMETERS
 
@@ -159,6 +191,7 @@ Specifies the AD DS instance to connect to. Accepts:
 - Fully qualified domain name
 - NetBIOS name
 - Directory server name (with optional port, e.g. `myDC01:636`)
+- Global Catalog (e.g. `GC://myDomain`)
 
 Defaults to the current domain if not specified.
 
