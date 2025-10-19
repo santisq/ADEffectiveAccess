@@ -32,7 +32,7 @@
     Copyright         = '(c) Santiago Squarzon. All rights reserved.'
 
     # Description of the functionality provided by this module
-    Description       = 'Active Directory friendly ACLs'
+    Description       = 'AD ACLs with readable rights, flexible LDAP and no AD module needed.'
 
     # Minimum version of the PowerShell engine required by this module
     PowerShellVersion = '5.1'
@@ -97,7 +97,21 @@
         PSData = @{
 
             # Tags applied to this module. These help with module discovery in online galleries.
-            # Tags = @()
+            Tags       = @(
+                'powershell',
+                'csharp',
+                'activedirectory',
+                'acl',
+                'accesscontrol',
+                'security',
+                'permissions',
+                'ldap',
+                'audit',
+                'directoryservices',
+                'ad',
+                'guidtranslation',
+                'tombstone'
+            )
 
             # A URL to the license for this module.
             LicenseUri = 'https://github.com/santisq/ADEffectiveAccess/blob/main/LICENSE'

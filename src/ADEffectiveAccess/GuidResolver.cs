@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.DirectoryServices;
+using System.Text.RegularExpressions;
 
 namespace ADEffectiveAccess;
 
@@ -26,6 +27,7 @@ internal sealed class GuidResolver
 
     internal void SetContext(string? server, DirectoryEntryBuilder builder)
     {
+        if (server is not null) server = Regex.Replace(server, "(?i)GC://", "LDAP://");
         using DirectoryEntry rootDSE = builder.Create(server, "RootDSE");
         string context = rootDSE.GetRootProperty(DefaultContext);
 

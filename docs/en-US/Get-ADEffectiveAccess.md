@@ -54,10 +54,10 @@ Unlike `Get-Acl`, there is no dependency on the Active Directory module and incl
 ### Example 1: Get ACL for a specific user by sAMAccountName
 
 ```powershell
-PS \> Get-ADEffectiveAccess -Identity John.Doe
+PS \> Get-ADEffectiveAccess -Identity john.galt
 ```
 
-Retrieves the effective access rules for the user `John.Doe` in the current domain.
+Retrieves the effective access rules for the user `john.galt` in the current domain.
 
 ### Example 2: Get ACLs for all users in an OU with audit rules
 
@@ -90,6 +90,14 @@ PS \> Get-ADEffectiveAccess -LdapFilter "(objectClass=computer)" -Server "myChil
 ```
 
 Retrieves access rules for all `computer` objects in a child domain with secure authentication and fast bind.
+
+### Example 6: Query ACLs with specific credentials
+
+Retrieves access rules for a user using specified credentials.
+
+```powershell
+PS /> Get-ADEffectiveAccess -Identity "john.galt" -Credential (Get-Credential)
+```
 
 ## PARAMETERS
 
@@ -191,7 +199,7 @@ Specifies the AD DS instance to connect to. Accepts:
 - Fully qualified domain name
 - NetBIOS name
 - Directory server name (with optional port, e.g. `myDC01:636`)
-- Global Catalog (e.g. `GC://myDomain`)
+- Global Catalog (e.g. `GC://myCatalogServer`)
 
 Defaults to the current domain if not specified.
 
