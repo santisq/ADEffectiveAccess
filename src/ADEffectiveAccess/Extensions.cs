@@ -53,6 +53,7 @@ internal static class Extensions
             return $"(distinguishedName={identity})";
         }
 
+        // searching by DN doesn't seem to work for deleted objects, this is a workaround...
         return $"(&(isDeleted=TRUE)({Regex.Replace(identity, @"(?<!\\),.+", "")}))";
     }
 

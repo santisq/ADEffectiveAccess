@@ -298,9 +298,10 @@ Represents effective audit rules with resolved `ObjectType` and `InheritedObject
 
 ## RELATED LINKS
 
-- [ActiveDirectoryAccessRule](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.activedirectoryaccessrule)
-- [ActiveDirectoryAuditRule](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.activedirectoryauditrule)
-- [Active Directory Module](https://learn.microsoft.com/en-us/powershell/module/activedirectory)
-- [Get-Credential](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.security/get-credential)
-- [DirectorySearcher](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.directorysearcher)
-- [Get-ADEffectiveAccess on GitHub](https://github.com/santisq/ADEffectiveAccess)
+### [ActiveDirectoryAccessRule](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.activedirectoryaccessrule)
+
+### [ActiveDirectoryAuditRule](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.activedirectoryauditrule)
+
+### [Active Directory Module](https://learn.microsoft.com/en-us/powershell/module/activedirectory)
+
+### [DirectorySearcher](https://learn.microsoft.com/en-us/dotnet/api/system.directoryservices.directorysearcher)
