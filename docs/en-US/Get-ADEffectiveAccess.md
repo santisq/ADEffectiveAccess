@@ -54,7 +54,7 @@ Unlike `Get-Acl`, there is no dependency on the Active Directory module and incl
 ### Example 1: Get ACL for a specific user by sAMAccountName
 
 ```powershell
-PS \> Get-ADEffectiveAccess -Identity john.galt
+PS /> Get-ADEffectiveAccess -Identity john.galt
 ```
 
 Retrieves the effective access rules for the user `john.galt` in the current domain.
@@ -62,7 +62,7 @@ Retrieves the effective access rules for the user `john.galt` in the current dom
 ### Example 2: Get ACLs for all users in an OU with audit rules
 
 ```powershell
-PS \> Get-ADEffectiveAccess -LdapFilter "(objectCategory=person)" -SearchBase "OU=Users,DC=mylab,DC=local" -Audit
+PS /> Get-ADEffectiveAccess -LdapFilter "(objectCategory=person)" -SearchBase "OU=Users,DC=mylab,DC=local" -Audit
 ```
 
 Retrieves access and audit rules for all user objects in the `Users` OU, including system access control list (SACL) rules.
@@ -70,7 +70,7 @@ Retrieves access and audit rules for all user objects in the `Users` OU, includi
 ### Example 3: Pipe AD user object to retrieve ACL
 
 ```powershell
-PS \> Get-ADUser -Identity "jdoe" | Get-ADEffectiveAccess
+PS /> Get-ADUser -Identity "jdoe" | Get-ADEffectiveAccess
 ```
 
 Uses pipeline input from `Get-ADUser` to retrieve effective access rules for the user `jdoe`.
@@ -78,7 +78,7 @@ Uses pipeline input from `Get-ADUser` to retrieve effective access rules for the
 ### Example 4: Get ACLs for deleted objects with a limit
 
 ```powershell
-PS \> Get-ADEffectiveAccess -LdapFilter "(objectClass=group)" -IncludeDeletedObjects -Top 10
+PS /> Get-ADEffectiveAccess -LdapFilter "(objectClass=group)" -IncludeDeletedObjects -Top 10
 ```
 
 Retrieves access rules for up to 10 deleted `group` objects in the domain, including tombstone objects.
@@ -86,7 +86,7 @@ Retrieves access rules for up to 10 deleted `group` objects in the domain, inclu
 ### Example 5: Query ACLs on a specific server with custom authentication
 
 ```powershell
-PS \> Get-ADEffectiveAccess -LdapFilter "(objectClass=computer)" -Server "myChildDomain.local:636" -AuthenticationTypes Secure, FastBind
+PS /> Get-ADEffectiveAccess -LdapFilter "(objectClass=computer)" -Server "myChildDomain.local:636" -AuthenticationTypes Secure, FastBind
 ```
 
 Retrieves access rules for all `computer` objects in a child domain with secure authentication and fast bind.
