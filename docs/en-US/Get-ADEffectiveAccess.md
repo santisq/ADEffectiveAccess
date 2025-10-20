@@ -17,7 +17,7 @@ Retrieves effective access and audit rules for Active Directory objects, transla
 
 ```powershell
 Get-ADEffectiveAccess
-    -Identity <String>
+    [-Identity] <String>
     [-Audit]
     [-IncludeDeletedObjects]
     [-Credential <PSCredential>]
@@ -270,7 +270,7 @@ Parameter Sets: Identity
 Aliases:
 
 Required: True
-Position: Named
+Position: 0
 Default value: None
 Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
